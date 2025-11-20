@@ -10,4 +10,10 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL). It contains the code
 2. Process your data using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
 3. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
 
+to do: upload scripts and describe output
+
+## Others
+
+The `beyond_the_centroid.yaml` and `beyond_the_centroid_analyses.R` are the conda environment and the R script that can be used to replicate the study: "Beyond the centroid: enhancing taxonomic profiling of Nanopore 16S rRNA data using classification confidence scores".
+
 ## Output
