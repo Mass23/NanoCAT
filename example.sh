@@ -1,0 +1,2 @@
+python3 process_16S_nanopore.py -f /data/16s/test_set/fastq_files/ -n /data/16s/processed_data/test_set -m /data/16s/test_set/meta_test.csv -t 32 -c /data/databases/16S_classifiers/nov_2024/greengenes2/2024.09.backbone.full-length.nb.qza,/data/databases/16S_classifiers/nov_2024/silva/silva-138-99-nb-classifier.qza,/data/databases/16S_classifiers/nov_2024/gtdb/gtdb_classifier_r220.qza --skippreprocessing # --skipqiime2
+
