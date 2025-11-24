@@ -1,124 +1,146 @@
 import numpy as np
 import pandas as pd
-from Bio import SeqIO, AlignIO
-from Bio.Align import AlignInfo
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
+import argparse
 import os
 import random
-import argparse
-import subprocess
 random.seed(10)
 
+###############################################################################
+# ---------------------------  TAXONOMY HELPERS  ------------------------------
+###############################################################################
+
 def GetCentroidTaxonomy(tab):
-    return(tab.loc[tab.Type == 'S'][['Cluster', 'Taxonomy', 'Confidence']])
-
-def GetMostConfidentTaxonomy(tab):
-    return(tab.loc[tab.groupby(["Cluster"]).Confidence.idxmax()][['Cluster', 'Taxonomy', 'Confidence']])
-
-def AssignedConsensusTaxonomy(taxonomies):
-    assigned = taxonomies[taxonomies != 'Unassigned']
-    if len(assigned) == 0:
-        return('Unassigned')
-    else:
-        alltax = assigned.str.split('; ').explode(ignore_index=True)
-        doma = alltax[alltax.str.startswith('d__')].mode().to_string(index=False)
-        phyl = alltax[alltax.str.startswith('p__')].mode().to_string(index=False)
-        clas = alltax[alltax.str.startswith('c__')].mode().to_string(index=False)
-        orde = alltax[alltax.str.startswith('o__')].mode().to_string(index=False)
-        fami = alltax[alltax.str.startswith('f__')].mode().to_string(index=False)
-        genu = alltax[alltax.str.startswith('g__')].mode().to_string(index=False)
-        spec = alltax[alltax.str.startswith('s__')].mode().to_string(index=False)
-        return('; '.join([doma,phyl,clas,orde,fami,genu,spec]).replace(' Series([], )',''))
-
-def GetAssignedConsensusTaxonomy(tab):
-    taxonomies = tab.groupby(["Cluster"]).Taxonomy.apply(AssignedConsensusTaxonomy)
-    clusters = tab.groupby(["Cluster"]).Cluster.first()
-    return(pd.DataFrame({'Cluster': clusters.tolist(), 'Taxonomy': taxonomies.tolist()}).reset_index())
-
-def AlignCluster(sequences, cpus):
-    with open('tmp.fasta', 'w') as handle:
-        SeqIO.write(sequences.values(), handle, 'fasta')
-    subprocess.call(f'mafft --thread {str(cpus)} tmp.fasta > tmp_aln.fasta', shell=True)
-    align = AlignIO.read('tmp_aln.fasta', "fasta")
-    os.remove('tmp.fasta')
-    os.remove('tmp_aln.fasta')
-    return(align)
-
-def GetConsensusAlignmentTaxonomy(tab, fasta_file, cpus):
-    sequences = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
-    sequences = {key.split(';')[0]: value for key, value in sequences.items()}
-    clusters = tab.Cluster.unique().tolist()
-    
-    consensus_fasta = []
-    for cluster in clusters:
-        print(cluster)
-        to_keep = tab[tab.Cluster == cluster]['ASV'].tolist()
-        if len(to_keep) > 50:
-            to_keep = random.sample(to_keep, 50)
-        cluster_sequences = {k: sequences[k] for k in to_keep}
-        print(len(cluster_sequences))
-        alignment = AlignCluster(cluster_sequences, cpus)
-        summary_align = AlignInfo.SummaryInfo(alignment)
-        consensus = summary_align.dumb_consensus(threshold=0.5)
-        consensus_fasta.append(SeqRecord(Seq(consensus), str(cluster)))
-    SeqIO.write(consensus_fasta, fasta_file.replace('all_derep','all_derep_consensus'), "fasta")
+    """Return taxonomy assigned to the OTU representative (S record)."""
+    return tab.loc[tab.Type == 'S'][['Cluster', 'Taxonomy', 'Confidence']]
 
 
+def GetMcCATTaxonomy(tab):
+    """Return mcCAT taxonomy = taxonomy of the read with highest confidence."""
+    idx = tab.groupby("Cluster").Confidence.idxmax()
+    return tab.loc[idx][['Cluster', 'Taxonomy', 'Confidence']]
+
+
+def GetHyCATTaxonomy(tab, coeff):
+    """
+    hyCAT:
+      - Start from centroid taxonomy
+      - If the most-confident read exceeds (centroid_conf * coeff),
+        replace taxonomy.
+    """
+    # Extract centroid-level taxonomy
+    centroid = GetCentroidTaxonomy(tab).rename(columns={
+        "Taxonomy": "Taxonomy.centroid",
+        "Confidence": "Confidence.centroid"
+    })
+
+    # Extract mcCAT taxonomy
+    mc = GetMcCATTaxonomy(tab).rename(columns={
+        "Taxonomy": "Taxonomy.mcCAT",
+        "Confidence": "Confidence.mcCAT"
+    })
+
+    # Merge
+    merged = pd.merge(centroid, mc, on="Cluster", how="left")
+
+    # Default hyCAT = centroid
+    merged["Taxonomy.hyCAT"] = merged["Taxonomy.centroid"]
+    merged["Confidence.hyCAT"] = merged["Confidence.centroid"]
+
+    # Apply replacement rule
+    mask = (
+        (merged["Confidence.mcCAT"] > (merged["Confidence.centroid"] * coeff)) &
+        (merged["Taxonomy.mcCAT"] != "assigned")
+    )
+
+    merged.loc[mask, "Taxonomy.hyCAT"] = merged.loc[mask, "Taxonomy.mcCAT"]
+    merged.loc[mask, "Confidence.hyCAT"] = merged.loc[mask, "Confidence.mcCAT"]
+
+    return merged[['Cluster', 'Taxonomy.hyCAT', 'Confidence.hyCAT']].rename(
+        columns={"Taxonomy.hyCAT": "Taxonomy", "Confidence.hyCAT": "Confidence"}
+    )
+
+
+###############################################################################
+# ------------------------------  PARSING  ------------------------------------
+###############################################################################
 
 def ParseTables(otufile, taxfile):
-    otutab = pd.read_csv(otufile, sep = '\t', header = None, usecols = [0, 1, 8, 9], names = ['Type', 'Cluster', 'ASVsize', 'Centroid'])
-    taxtab = pd.read_csv(taxfile, sep='\t', header=0, names=['ASVsize', 'Taxonomy', 'Confidence'])
+    otutab = pd.read_csv(
+        otufile, sep='\t', header=None,
+        usecols=[0, 1, 8, 9],
+        names=['Type', 'Cluster', 'ASVsize', 'Centroid']
+    )
+    taxtab = pd.read_csv(
+        taxfile, sep='\t', header=0,
+        names=['ASVsize', 'Taxonomy', 'Confidence']
+    )
 
-    otutab['Centroid'] = otutab.index.map(lambda x: otutab.loc[x, 'Centroid'].split(';')[0] if otutab.loc[x, 'Centroid'] != "*" else otutab.loc[x, 'ASVsize'].split(';')[0])
+    # Extract centroid ID
+    otutab['Centroid'] = otutab.index.map(
+        lambda x: otutab.loc[x, 'Centroid'].split(';')[0]
+        if otutab.loc[x, 'Centroid'] != "*"
+        else otutab.loc[x, 'ASVsize'].split(';')[0]
+    )
+
+    # Merge with taxonomy
     fulltab = pd.merge(otutab, taxtab, on='ASVsize')
     fulltab = fulltab[fulltab.Type != 'C']
 
-    fulltab['Cluster'] = fulltab['Centroid'].apply(lambda x: x.split(';')[0]) #'clu_' + fulltab['Cluster'].astype(str)
-    fulltab[['ASV', 'Count']] = fulltab['ASVsize'].str.split(';size=', n=1, expand=True)
-    fulltab.Count = fulltab.Count.astype('int64')
-    fulltab['ClusterCount'] = fulltab['Count'].groupby(fulltab['Cluster']).transform('sum')
-    #fulltab = fulltab[fulltab.ClusterCount > 1]
+    # Clean cluster identifiers
+    fulltab['Cluster'] = fulltab['Centroid'].apply(lambda x: x.split(';')[0])
 
-    return(fulltab)
+    # Extract ASV and abundance
+    fulltab[['ASV', 'Count']] = fulltab['ASVsize'].str.split(';size=', n=1, expand=True)
+    fulltab['Count'] = fulltab['Count'].astype(int)
+
+    # Compute per-OTU abundance
+    fulltab['ClusterCount'] = fulltab['Count'].groupby(fulltab['Cluster']).transform('sum')
+
+    return fulltab
+
+
+###############################################################################
+# ------------------------------- MAIN ----------------------------------------
+###############################################################################
 
 def main():
-    # Create an argument parser
-    parser = argparse.ArgumentParser(description="Aggregates OTU taxonomy from ASV taxonomy classification.")
+    parser = argparse.ArgumentParser(
+        description="Aggregates OTU taxonomy using centroid, mcCAT, or hyCAT methods."
+    )
 
-    # Add the folder path argument
-    parser.add_argument("-f", "--folder", type=str, help="Path to the results folder as a string.", required=True)
-    parser.add_argument("-t", "--taxonomy", type=str, help="Name of the taxonomy file to process.", required=True)
-    parser.add_argument("-n", "--name", type=str, help="Name to append to the output file.", required=True)
-    parser.add_argument("-m", "--mode", type=str, default='centroid', help="What method to use to aggregate taxonomy: centroid/mostconfident/taxonconsensus/alignconsensus, default is centroid.")              
-    parser.add_argument("-c", "--cpus", type=int, default=1, help="Number of CPUs to use.")      
-    
+    parser.add_argument("-f", "--folder", required=True, type=str,
+                        help="Path to the results folder.")
+    parser.add_argument("-t", "--taxonomy", required=True, type=str,
+                        help="Taxonomy file returned by classifier.")
+    parser.add_argument("-n", "--name", required=True, type=str,
+                        help="Name to append to output file.")
+    parser.add_argument("-m", "--mode", default='centroid', type=str,
+                        help="Aggregation mode: centroid / mcCAT / hyCAT.")
+    parser.add_argument("-c", "--coeff", default=1.0, type=float,
+                        help="Multiplier threshold for hyCAT (default=1.0).")
 
-    # Parse arguments
     args = parser.parse_args()
 
-    fulltab = ParseTables(f'{args.folder}vsearch/otu_clusters.uc', args.taxonomy)
+    fulltab = ParseTables(f"{args.folder}vsearch/otu_clusters.uc", args.taxonomy)
 
+    # --------- SELECT AGGREGATION METHOD ---------
     if args.mode == 'centroid':
         agg_tax = GetCentroidTaxonomy(fulltab)
-    
-    elif args.mode == 'mostconfident':
-        agg_tax = GetMostConfidentTaxonomy(fulltab)
-    
-    elif args.mode == 'taxonconsensus':
-        agg_tax = GetAssignedConsensusTaxonomy(fulltab)
 
-    elif args.mode == 'alignconsensus':
-        agg_tax = GetConsensusAlignmentTaxonomy(fulltab, f'{args.folder}vsearch/drep_data/all_derep.fasta', args.cpus)
-    
-    else:
-        print('Mode not recognised, please choose one of centroid, mostconfident, taxonconsensus & alignconsensus')
+    elif args.mode == 'mcCAT':
+        agg_tax = GetMcCATTaxonomy(fulltab)
 
-    if args.mode == 'alignconsensus':
-        return
+    elif args.mode == 'hyCAT':
+        agg_tax = GetHyCATTaxonomy(fulltab, coeff=args.coeff)
 
     else:
-        agg_tax.to_csv(f'{args.folder}exports/aggregated_taxonomy_{args.name}_{args.mode}.tsv', encoding='utf-8', index=False)
+        raise ValueError("Mode not recognized. Use: centroid / mcCAT / hyCAT")
+
+    # --------- OUTPUT ---------
+    outfile = f"{args.folder}exports/aggregated_taxonomy_{args.name}_{args.mode}.tsv"
+    agg_tax.to_csv(outfile, sep="\t", index=False, encoding="utf-8")
+    print(f"Saved: {outfile}")
+
 
 if __name__ == "__main__":
     main()
