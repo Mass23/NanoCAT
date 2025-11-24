@@ -1,4 +1,4 @@
-name: MACE_16S_nanopore
+name: NanoCAT
 channels:
   - conda-forge
   - bioconda
