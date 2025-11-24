@@ -47,7 +47,7 @@ VSEARCH generates an OTU mapping file: `<folder>/vsearch/otu_clusters.uc`
 This file contains:
 
 - ASV-to-OTU cluster assignments  
-- The representative (“S” record) sequence for each OTU  
+- The representative centroid (“S” record) sequence for each OTU  
 - Dereplicated sequence identifiers and sizes  
 
 This file is used internally by NanoCAT to map read-level taxonomy back onto OTUs.
