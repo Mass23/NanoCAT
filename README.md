@@ -17,8 +17,10 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 - Scripts for the full ONT 16S pipeline: from read preprocessing to taxonomy assignment.
 - The CAT approach, including:
+  
 --> **mcCAT** — Selects the taxonomy of the **single read with the highest confidence** in each OTU.  
---> **hyCAT** — Uses the highest-confidence read *only if* it beats what centroid-based classification would have called.  
+--> **hyCAT** — Uses the highest-confidence read *only if* it beats what centroid-based classification would have called.
+  
 - Support files to reproduce the analyses from our study ("Beyond the centroid..."): conda environment specs (`beyond_the_centroid.yaml`) and R analysis scripts (`beyond_the_centroid_analyses.R`).
 
 ---
