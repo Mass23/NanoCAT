@@ -29,7 +29,7 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 1. Create the conda environment:  
    ```bash
-   conda env create -f CAT.yml  
+   conda env create -f NanoCAT.yml  
    conda activate NanoCAT
    ```
 2. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
