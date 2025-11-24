@@ -1,7 +1,7 @@
 # 🧬 NanoCAT — Confidence-score based Assignment of Taxonomies
 
 **Version:** v0.1  
-**Author:** Massimo Bourquin, October 2025  
+**Author:** Massimo Bourquin, November 2025  
 
 ---
 
