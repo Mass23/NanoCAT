@@ -36,3 +36,56 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 3. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
 
 ## Output
+
+After running NanoCAT, the pipeline produces several key files that summarize clustering, classification, and CAT-level aggregation.
+
+### VSEARCH OTU Clustering Output
+
+VSEARCH generates an OTU mapping file: `<folder>/vsearch/otu_clusters.uc`
+
+
+This file contains:
+
+- ASV-to-OTU cluster assignments  
+- The representative (“S” record) sequence for each OTU  
+- Dereplicated sequence identifiers and sizes  
+
+This file is used internally by NanoCAT to map read-level taxonomy back onto OTUs.
+
+---
+
+### Aggregated Taxonomy Output
+
+NanoCAT generates one taxonomy table per run, stored at: `<folder>/exports/aggregated_taxonomy_<name>_<mode>.tsv`
+
+
+Where:
+
+- `<name>` is the user-provided label (`-n`)
+- `<mode>` is the taxonomy aggregation method:
+  - `centroid` — taxonomy assigned to the OTU representative  
+  - `mcCAT` — taxonomy of the read with highest classifier confidence  
+  - `hyCAT` — centroid taxonomy replaced only when a more confident read exceeds a multiplier (`-c`)
+
+Each file contains:
+
+| Column        | Description                                                        |
+|---------------|--------------------------------------------------------------------|
+| Cluster       | OTU identifier (from centroid sequence ID)                         |
+| Taxonomy      | Final taxonomy assigned to the OTU                                 |
+| Confidence    | Confidence score associated with the assignment                    |
+
+---
+
+### hyCAT Behavior
+
+When using `hyCAT`, NanoCAT applies:
+
+1. Start with the centroid taxonomy  
+2. Replace it with the mcCAT taxonomy **only if**:  
+   - `Confidence_mcCAT > Confidence_centroid × coefficient`, and  
+   - The mcCAT taxonomy is not `"Unassigned"`
+
+This provides a conservative but adaptive alternative to centroid-only classification.
+
+
