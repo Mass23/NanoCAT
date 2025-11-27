@@ -33,7 +33,7 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 First, install the environment with the yml file available in this repository.
    ```bash
-   conda create --file NanoCAT.yml
+   conda env create --file NanoCAT.yml
    conda activate NanoCAT
    ```
 
