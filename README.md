@@ -31,38 +31,24 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 1. Create the conda environment:
 
-First, install the qiime2 amplicon distribution for your system (here linux/ubuntu), and then update it using the yml file available in this repository.
+First, install the environment with the yml file available in this repository.
    ```bash
-   conda env create -n NanoCAT --file https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2025.10/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
+   conda create --file NanoCAT.yml
    conda activate NanoCAT
-   conda env update --file NanoCAT.yml
    ```
-3. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
-4. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
+
+The installation can be tested using the bash script: `test_NanoCAT.sh`. The test will download one SRR sequencing data from the internet, one qiime2 classifier and process that sample using NanoCAT (`process_16S_nanopore.py` and then `CAT_taxonomy.py`), and then test the output files using md5sum checks.
+
+3. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S_nanopore.py`
+4. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomy.py`
 
 ## Output
 
-After running NanoCAT, the pipeline produces several key files that summarize clustering, classification, and CAT-level aggregation.
+After running NanoCAT, the pipeline produces several key files that summarize clustering, classification, and CAT-level aggregation. To analyse the dataset the important ones are:
 
-### VSEARCH OTU Clustering Output
+1. The OTU table in output_name`_results/vsearch/otu_table.tsv`
 
-VSEARCH generates an OTU mapping file: `<folder>/vsearch/otu_clusters.uc`
-
-
-This file contains:
-
-- ASV-to-OTU cluster assignments  
-- The representative centroid (“S” record) sequence for each OTU  
-- Dereplicated sequence identifiers and sizes  
-
-This file is used internally by NanoCAT to map read-level taxonomy back onto OTUs.
-
----
-
-### Aggregated Taxonomy Output
-
-NanoCAT generates one taxonomy table per run, stored at: `<folder>/exports/aggregated_taxonomy_<name>_<mode>.tsv`
-
+2. After running the CAT aggregation script, NanoCAT generates one taxonomy table per run, stored at: `<folder>/exports/aggregated_taxonomy_<name>_<mode>.tsv`
 
 Where:
 
@@ -91,6 +77,6 @@ When using `hyCAT`, NanoCAT applies:
    - `Confidence_mcCAT > Confidence_centroid × coefficient`, and  
    - The mcCAT taxonomy is not `"Unassigned"`
 
-This provides a conservative but adaptive alternative to centroid-only classification.
+This provides a conservative but adaptive alternative to centroid-only and most-confident classifications.
 
 
