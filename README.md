@@ -3,6 +3,8 @@
 **Version:** v0.1  
 **Author:** Massimo Bourquin, November 2025  
 
+/For now tested on linux/
+
 ---
 
 ## What’s NanoCAT?  
@@ -27,13 +29,16 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 ## Installation & Usage
 
-1. Create the conda environment:  
+1. Create the conda environment:
+
+First, install the qiime2 amplicon distribution for your system (here linux/ubuntu), and then update it using the yml file available in this repository.
    ```bash
-   conda env create -f NanoCAT.yml  
+   conda env create -n NanoCAT --file https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2025.10/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
    conda activate NanoCAT
+   conda env update --file NanoCAT.yml
    ```
-2. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
-3. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
+3. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
+4. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
 
 ## Output
 

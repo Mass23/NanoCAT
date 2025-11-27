@@ -16,6 +16,7 @@ SRA_ID="DRR225044"
 echo "[INFO] Downloading FASTQ for ${SRA_ID}…"
 # The --split-3 ensures single-end/single reads are handled
 fastq-dump --split-3 --outdir test/raw_reads "${SRA_ID}"
+gzip test/raw_reads/DRR225044.fastq
 
 ### -----------------------------
 ### 3. Create metadata.tsv
@@ -29,7 +30,7 @@ echo "[INFO] Metadata created at test/metadata.tsv"
 ### -----------------------------
 ### 4. Download classifier
 ### -----------------------------
-CLASSIFIER_URL="https://data.qiime2.org/2024.2/common/silva-138-99-nb-classifier.qza"
+CLASSIFIER_URL="https://data.qiime2.org/classifiers/sklearn-1.4.2/silva/silva-138-99-nb-classifier.qza"
 
 echo "[INFO] Downloading QIIME2 classifier…"
 wget -O test/classifier/silva-138-99-nb-classifier.qza "${CLASSIFIER_URL}"
