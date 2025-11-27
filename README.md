@@ -3,6 +3,8 @@
 **Version:** v0.1  
 **Author:** Massimo Bourquin, November 2025  
 
+/For now tested on linux/
+
 ---
 
 ## What’s NanoCAT?  
