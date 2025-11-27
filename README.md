@@ -37,8 +37,7 @@ First, install the environment with the yml file available in this repository.
    conda activate NanoCAT
    ```
 
-The installation can be tested using the bash script: `test_NanoCAT.sh`. The test will download one SRR sequencing data from the internet, one qiime2 classifier and process that sample using NanoCAT (`process_16S_nanopore.py` and then `CAT_taxonomy.py`), and then test the output files using md5sum checks.
-
+2. The installation can be tested using the bash script: `test_NanoCAT.sh`. The test will download one SRR sequencing data from the internet, one qiime2 classifier and process that sample using NanoCAT (`process_16S_nanopore.py` and then `CAT_taxonomy.py`), and then test the output files using md5sum checks.
 3. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S_nanopore.py`
 4. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomy.py`
 
