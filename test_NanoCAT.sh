@@ -30,7 +30,7 @@ echo "[INFO] Metadata created at test/metadata.tsv"
 ### -----------------------------
 ### 4. Download classifier
 ### -----------------------------
-CLASSIFIER_URL="https://data.qiime2.org/2024.2/common/silva-138-99-nb-classifier.qza"
+CLASSIFIER_URL="https://data.qiime2.org/classifiers/sklearn-1.4.2/silva/silva-138-99-nb-classifier.qza"
 
 echo "[INFO] Downloading QIIME2 classifier…"
 wget -O test/classifier/silva-138-99-nb-classifier.qza "${CLASSIFIER_URL}"
