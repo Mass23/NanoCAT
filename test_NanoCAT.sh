@@ -16,6 +16,7 @@ SRA_ID="DRR225044"
 echo "[INFO] Downloading FASTQ for ${SRA_ID}…"
 # The --split-3 ensures single-end/single reads are handled
 fastq-dump --split-3 --outdir test/raw_reads "${SRA_ID}"
+gzip test/raw_reads/DRR225044.fastq
 
 ### -----------------------------
 ### 3. Create metadata.tsv
