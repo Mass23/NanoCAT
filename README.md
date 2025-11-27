@@ -31,8 +31,9 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 1. Create the conda environment:  
    ```bash
-   conda env create -f NanoCAT.yml  
+   conda env create -n NanoCAT --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
    conda activate NanoCAT
+   conda env update --file NanoCAT.yml
    ```
 2. Process the ONT reads using porechop, chopper, vsearch, and qiime2 using the script: `process_16S.py`
 3. Assign taxonomy using the CAT appraoch using the script: `CAT_taxonomies.py`
