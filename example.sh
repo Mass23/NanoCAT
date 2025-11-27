@@ -1,3 +1,12 @@
-python3 process_16S_nanopore.py -f /data/16s/test_set/fastq_files/ -n /data/16s/processed_data/test_set -m /data/16s/test_set/meta_test.csv -t 32 -c /data/databases/16S_classifiers/nov_2024/greengenes2/2024.09.backbone.full-length.nb.qza,/data/databases/16S_classifiers/nov_2024/silva/silva-138-99-nb-classifier.qza,/data/databases/16S_classifiers/nov_2024/gtdb/gtdb_classifier_r220.qza --skippreprocessing # --skipqiime2
+python3 process_16S_nanopore.py \
+    -f test/raw_reads \
+    -n test/test \
+    -m test/metadata.tsv \
+    -t 2 \
+    -c test/classifier/silva-138-99-nb-classifier.qza
 
-python3 aggregate_taxonomy.py -f /data/16s/processed_data/test_set -t /data/16s/processed_data/test_set/taxonomy_file.tsv -c 4
+# CAT using hyCAT
+python3 CAT_taxonomy.py -f test/test_results/ -t test/test_results/exports/taxonomy.tsv -n test_silva_leale2025 -m hyCAT -c 1.2
+
+# CAT using mcCAT
+python3 CAT_taxonomy.py -f test/test_results/ -t test/test_results/exports/taxonomy.tsv -n test_silva_leale2025 -m mcCAT
