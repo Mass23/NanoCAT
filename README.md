@@ -31,7 +31,7 @@ This is the ONT 16S pipeline of the MACE laboratory (EPFL).
 
 1. Create the conda environment:  
    ```bash
-   conda env create -n NanoCAT --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
+   conda env create -n NanoCAT --file https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2025.10/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
    conda activate NanoCAT
    conda env update --file NanoCAT.yml
    ```
