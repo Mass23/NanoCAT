@@ -13,7 +13,6 @@ dependencies:
   - pip=24.2
   - porechop=0.2.4
   - python=3.10.14
-  - qiime2/label/r2024.10::qiime2=2024.10.1
   - vsearch
   - pip:
       - iso8601==2.1.0
